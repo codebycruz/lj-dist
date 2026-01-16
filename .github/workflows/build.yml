@@ -46,12 +46,15 @@ jobs:
               run: |
                   make HOST_CC="gcc -m64" CROSS=aarch64-linux-gnu- STATIC_CC="aarch64-linux-gnu-gcc" BUILDMODE=static TARGET_SYS=Linux
 
+            - name: Setup MSVC (Windows)
+              if: matrix.platform == 'windows'
+              uses: ilammy/msvc-dev-cmd@v1
+
             - name: Build LuaJIT (Windows x86-64)
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
               working-directory: luajit/src
               shell: cmd
-              run: |
-                  call msvcbuild.bat static
+              run: msvcbuild.bat static
 
             - name: Package artifacts (Linux)
               if: matrix.platform == 'linux'
