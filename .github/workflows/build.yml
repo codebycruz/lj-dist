@@ -90,3 +90,17 @@ jobs:
                   name: luajit-${{ matrix.platform }}-${{ matrix.arch }}
                   path: luajit-${{ matrix.platform }}-${{ matrix.arch }}/
                   retention-days: 30
+
+            - name: Create tarball
+              shell: bash
+              run: |
+                  tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+
+            - name: Upload to release
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: latest
+                  files: luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+                  fail_on_unmatched_files: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
