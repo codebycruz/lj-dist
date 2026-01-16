@@ -17,7 +17,6 @@ jobs:
                       platform: linux
                       arch: aarch64
                       cc: aarch64-linux-gnu-gcc
-                      container: ghcr.io/cross-rs/aarch64-unknown-linux-gnu:latest
                     # Windows builds
                     - os: windows-latest
                       platform: windows
@@ -25,9 +24,21 @@ jobs:
                       cc: gcc
 
         runs-on: ${{ matrix.os }}
-        container: ${{ matrix.container || '' }}
 
         steps:
+            - name: Cache ARM64 toolchain
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
+              uses: actions/cache@v4
+              with:
+                  path: /var/cache/apt/archives
+                  key: ${{ runner.os }}-apt-aarch64-toolchain
+
+            - name: Install cross-compilation tools (Linux ARM64)
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
             - name: Checkout LuaJIT
               uses: actions/checkout@v4
               with:
