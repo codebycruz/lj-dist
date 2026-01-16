@@ -1,0 +1,78 @@
+name: Build LuaJIT
+
+on:
+    workflow_dispatch:
+
+jobs:
+    build:
+        strategy:
+            matrix:
+                include:
+                    # Linux builds
+                    - os: ubuntu-latest
+                      platform: linux
+                      arch: x86-64
+                      cc: gcc
+                    - os: ubuntu-latest
+                      platform: linux
+                      arch: aarch64
+                      cc: aarch64-linux-gnu-gcc
+                      container: ghcr.io/cross-rs/aarch64-unknown-linux-gnu:latest
+                    # Windows builds
+                    - os: windows-latest
+                      platform: windows
+                      arch: x86-64
+                      cc: gcc
+
+        runs-on: ${{ matrix.os }}
+        container: ${{ matrix.container || '' }}
+
+        steps:
+            - name: Checkout LuaJIT
+              uses: actions/checkout@v4
+              with:
+                  repository: LuaJIT/LuaJIT
+                  path: luajit
+
+            - name: Build LuaJIT (Linux x86-64)
+              if: matrix.platform == 'linux' && matrix.arch == 'x86-64'
+              working-directory: luajit
+              run: |
+                  make STATIC_CC="gcc" BUILDMODE=static
+
+            - name: Build LuaJIT (Linux ARM64)
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
+              working-directory: luajit
+              run: |
+                  make HOST_CC="gcc -m64" CROSS=aarch64-linux-gnu- STATIC_CC="aarch64-linux-gnu-gcc" BUILDMODE=static TARGET_SYS=Linux
+
+            - name: Build LuaJIT (Windows x86-64)
+              if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
+              working-directory: luajit/src
+              shell: cmd
+              run: |
+                  call msvcbuild.bat static
+
+            - name: Package artifacts (Linux)
+              if: matrix.platform == 'linux'
+              run: |
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/include
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
+                  cp -r luajit/src/*.h luajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
+                  cp luajit/src/libluajit.a luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+
+            - name: Package artifacts (Windows)
+              if: matrix.platform == 'windows'
+              shell: bash
+              run: |
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/include
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
+                  cp luajit/src/*.h luajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
+                  cp luajit/src/lua51.lib luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: luajit-${{ matrix.platform }}-${{ matrix.arch }}
+                  path: luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+                  retention-days: 30
