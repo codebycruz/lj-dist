@@ -70,40 +70,57 @@ jobs:
               shell: cmd
               run: msvcbuild.bat static
 
-            - name: Package artifacts (Linux)
+            # Package library (static lib + headers)
+            - name: Package library (Linux)
               if: matrix.platform == 'linux'
               run: |
-                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/include
-                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
-                  cp -r luajit/src/*.h luajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
-                  cp luajit/src/libluajit.a luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
+                  cp -r luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
+                  cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
 
-            - name: Package artifacts (Windows)
+            - name: Package library (Windows)
               if: matrix.platform == 'windows'
               shell: bash
               run: |
-                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/include
-                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
-                  cp luajit/src/*.h luajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
-                  cp luajit/src/lua51.lib luajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
+                  cp luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
+                  cp luajit/src/lua51.lib libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
 
-            - name: Upload artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: luajit-${{ matrix.platform }}-${{ matrix.arch }}
-                  path: luajit-${{ matrix.platform }}-${{ matrix.arch }}/
-                  retention-days: 30
+            # Package binary (executable only)
+            - name: Package binary (Linux)
+              if: matrix.platform == 'linux'
+              run: |
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}
+                  cp luajit/src/luajit luajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
-            - name: Create tarball
+            - name: Package binary (Windows)
+              if: matrix.platform == 'windows'
+              shell: bash
+              run: |
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}
+                  cp luajit/src/luajit.exe luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+
+            # Create tarballs
+            - name: Create library tarball
+              shell: bash
+              run: |
+                  tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}/
+
+            - name: Create binary tarball
               shell: bash
               run: |
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
+            # Upload to release
             - name: Upload to release
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: latest
-                  files: luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+                  files: |
+                      libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+                      luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
                   fail_on_unmatched_files: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
