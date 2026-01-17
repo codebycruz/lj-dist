@@ -15,16 +15,13 @@ jobs:
                     - os: ubuntu-latest
                       platform: linux
                       arch: x86-64
-                      cc: gcc
                     - os: ubuntu-latest
                       platform: linux
                       arch: aarch64
-                      cc: aarch64-linux-gnu-gcc
                     # Windows builds
                     - os: windows-latest
                       platform: windows
                       arch: x86-64
-                      cc: gcc
 
         runs-on: ${{ matrix.os }}
 
@@ -60,15 +57,22 @@ jobs:
               run: |
                   make HOST_CC="gcc -m64" CROSS=aarch64-linux-gnu- STATIC_CC="aarch64-linux-gnu-gcc" BUILDMODE=static TARGET_SYS=Linux
 
-            - name: Setup MSVC (Windows)
+            - name: Setup MinGW (Windows)
               if: matrix.platform == 'windows'
-              uses: ilammy/msvc-dev-cmd@v1
+              uses: msys2/setup-msys2@v2
+              with:
+                  msystem: MINGW64
+                  update: true
+                  install: >-
+                      mingw-w64-x86_64-gcc
+                      make
 
             - name: Build LuaJIT (Windows x86-64)
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
-              working-directory: luajit/src
-              shell: cmd
-              run: msvcbuild.bat static
+              working-directory: luajit
+              shell: msys2 {0}
+              run: |
+                  make STATIC_CC="gcc" BUILDMODE=static
 
             # Package library (static lib + headers)
             - name: Package library (Linux)
@@ -86,7 +90,7 @@ jobs:
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
                   cp luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
-                  cp luajit/src/lua51.lib libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+                  cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
 
             # Package binary (executable only)
             - name: Package binary (Linux)
