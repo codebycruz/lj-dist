@@ -18,8 +18,8 @@ jobs:
                     - os: ubuntu-latest
                       platform: linux
                       arch: aarch64
-                    # Windows builds
-                    - os: windows-latest
+                    # Windows builds (cross-compiled from Linux)
+                    - os: ubuntu-latest
                       platform: windows
                       arch: x86-64
 
@@ -28,10 +28,17 @@ jobs:
         steps:
             - name: Cache ARM64 toolchain
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
-              uses: actions/cache@v4
+              uses: actions/cache@v5
               with:
                   path: /var/cache/apt/archives
                   key: ${{ runner.os }}-apt-aarch64-toolchain
+
+            - name: Cache MinGW toolchain
+              if: matrix.platform == 'windows'
+              uses: actions/cache@v5
+              with:
+                  path: /var/cache/apt/archives
+                  key: ${{ runner.os }}-apt-mingw-toolchain
 
             - name: Install cross-compilation tools (Linux ARM64)
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
@@ -39,8 +46,14 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
+            - name: Install cross-compilation tools (Windows)
+              if: matrix.platform == 'windows'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+
             - name: Checkout LuaJIT
-              uses: actions/checkout@v4
+              uses: actions/checkout@v6
               with:
                   repository: LuaJIT/LuaJIT
                   path: luajit
@@ -57,22 +70,11 @@ jobs:
               run: |
                   make HOST_CC="gcc -m64" CROSS=aarch64-linux-gnu- STATIC_CC="aarch64-linux-gnu-gcc" BUILDMODE=static TARGET_SYS=Linux
 
-            - name: Setup MinGW (Windows)
-              if: matrix.platform == 'windows'
-              uses: msys2/setup-msys2@v2
-              with:
-                  msystem: MINGW64
-                  update: true
-                  install: >-
-                      mingw-w64-x86_64-gcc
-                      make
-
             - name: Build LuaJIT (Windows x86-64)
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
               working-directory: luajit
-              shell: msys2 {0}
               run: |
-                  make STATIC_CC="gcc" BUILDMODE=static
+                  make HOST_CC="gcc -m64" CROSS=x86_64-w64-mingw32- STATIC_CC="x86_64-w64-mingw32-gcc" BUILDMODE=static TARGET_SYS=Windows
 
             # Package library (static lib + headers)
             - name: Package library (Linux)
@@ -85,7 +87,6 @@ jobs:
 
             - name: Package library (Windows)
               if: matrix.platform == 'windows'
-              shell: bash
               run: |
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
@@ -101,25 +102,22 @@ jobs:
 
             - name: Package binary (Windows)
               if: matrix.platform == 'windows'
-              shell: bash
               run: |
                   mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}
                   cp luajit/src/luajit.exe luajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
             # Create tarballs
             - name: Create library tarball
-              shell: bash
               run: |
                   tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
             - name: Create binary tarball
-              shell: bash
               run: |
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
             # Upload to release
             - name: Upload to release
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
                   tag_name: latest
                   files: |
