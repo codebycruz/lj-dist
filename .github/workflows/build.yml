@@ -40,12 +40,12 @@ jobs:
                   path: /var/cache/apt/archives
                   key: ${{ runner.os }}-apt-aarch64-toolchain
 
-            - name: Cache ARM64 musl toolchain
+            - name: Cache ARM64 musl container
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'musl'
               uses: actions/cache@v5
               with:
-                  path: /var/cache/apt/archives
-                  key: ${{ runner.os }}-apt-aarch64-musl-toolchain
+                  path: /var/lib/docker
+                  key: ${{ runner.os }}-docker-muslcc-aarch64
 
             - name: Cache MinGW toolchain
               if: matrix.platform == 'windows'
@@ -60,14 +60,10 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-            - name: Install cross-compilation tools (Linux ARM64 musl)
+            - name: Pull musl toolchain container
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'musl'
               run: |
-                  sudo apt-get update
-                  sudo apt-get install -y musl-tools
-                  wget https://musl.cc/aarch64-linux-musl-cross.tgz
-                  tar -xzf aarch64-linux-musl-cross.tgz
-                  echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
+                  docker pull muslcc/x86_64:aarch64-linux-musl
 
             - name: Install cross-compilation tools (Windows)
               if: matrix.platform == 'windows'
@@ -95,9 +91,9 @@ jobs:
 
             - name: Build LuaJIT (Linux ARM64 musl)
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'musl'
-              working-directory: luajit
               run: |
-                  make HOST_CC="gcc -m64" CROSS=aarch64-linux-musl- STATIC_CC="aarch64-linux-musl-gcc" BUILDMODE=static TARGET_SYS=Linux
+                  docker run --rm -v $PWD/luajit:/work -w /work muslcc/x86_64:aarch64-linux-musl \
+                    sh -c 'make HOST_CC="gcc -m64" CROSS=aarch64-linux-musl- STATIC_CC="aarch64-linux-musl-gcc" BUILDMODE=static TARGET_SYS=Linux'
 
             - name: Build LuaJIT (Windows x86-64)
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
