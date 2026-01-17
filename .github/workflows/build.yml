@@ -15,23 +15,37 @@ jobs:
                     - os: ubuntu-latest
                       platform: linux
                       arch: x86-64
+                      libc: gnu
                     - os: ubuntu-latest
                       platform: linux
                       arch: aarch64
+                      libc: gnu
+                    - os: ubuntu-latest
+                      platform: linux
+                      arch: aarch64
+                      libc: musl
                     # Windows builds (cross-compiled from Linux)
                     - os: ubuntu-latest
                       platform: windows
                       arch: x86-64
+                      libc: gnu
 
         runs-on: ${{ matrix.os }}
 
         steps:
             - name: Cache ARM64 toolchain
-              if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'gnu'
               uses: actions/cache@v5
               with:
                   path: /var/cache/apt/archives
                   key: ${{ runner.os }}-apt-aarch64-toolchain
+
+            - name: Cache ARM64 musl toolchain
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'musl'
+              uses: actions/cache@v5
+              with:
+                  path: /var/cache/apt/archives
+                  key: ${{ runner.os }}-apt-aarch64-musl-toolchain
 
             - name: Cache MinGW toolchain
               if: matrix.platform == 'windows'
@@ -40,11 +54,20 @@ jobs:
                   path: /var/cache/apt/archives
                   key: ${{ runner.os }}-apt-mingw-toolchain
 
-            - name: Install cross-compilation tools (Linux ARM64)
-              if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
+            - name: Install cross-compilation tools (Linux ARM64 GNU)
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'gnu'
               run: |
                   sudo apt-get update
                   sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+            - name: Install cross-compilation tools (Linux ARM64 musl)
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'musl'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y musl-tools
+                  wget https://musl.cc/aarch64-linux-musl-cross.tgz
+                  tar -xzf aarch64-linux-musl-cross.tgz
+                  echo "$PWD/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
 
             - name: Install cross-compilation tools (Windows)
               if: matrix.platform == 'windows'
@@ -64,11 +87,17 @@ jobs:
               run: |
                   make STATIC_CC="gcc" BUILDMODE=static
 
-            - name: Build LuaJIT (Linux ARM64)
-              if: matrix.platform == 'linux' && matrix.arch == 'aarch64'
+            - name: Build LuaJIT (Linux ARM64 GNU)
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'gnu'
               working-directory: luajit
               run: |
                   make HOST_CC="gcc -m64" CROSS=aarch64-linux-gnu- STATIC_CC="aarch64-linux-gnu-gcc" BUILDMODE=static TARGET_SYS=Linux
+
+            - name: Build LuaJIT (Linux ARM64 musl)
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'musl'
+              working-directory: luajit
+              run: |
+                  make HOST_CC="gcc -m64" CROSS=aarch64-linux-musl- STATIC_CC="aarch64-linux-musl-gcc" BUILDMODE=static TARGET_SYS=Linux
 
             - name: Build LuaJIT (Windows x86-64)
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
@@ -80,40 +109,40 @@ jobs:
             - name: Package library (Linux)
               if: matrix.platform == 'linux'
               run: |
-                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
-                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
-                  cp -r luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
-                  cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib
+                  cp -r luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
+                  cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib/
 
             - name: Package library (Windows)
               if: matrix.platform == 'windows'
               run: |
-                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
-                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
-                  cp luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
-                  cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib
+                  cp luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
+                  cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib/
 
             # Package binary (executable only)
             - name: Package binary (Linux)
               if: matrix.platform == 'linux'
               run: |
-                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}
-                  cp luajit/src/luajit luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}
+                  cp luajit/src/luajit luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
             - name: Package binary (Windows)
               if: matrix.platform == 'windows'
               run: |
-                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}
-                  cp luajit/src/luajit.exe luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}
+                  cp luajit/src/luajit.exe luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
             # Create tarballs
             - name: Create library tarball
               run: |
-                  tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}/
+                  tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
             - name: Create binary tarball
               run: |
-                  tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+                  tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
             # Upload to release
             - name: Upload to release
@@ -121,8 +150,8 @@ jobs:
               with:
                   tag_name: latest
                   files: |
-                      libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
-                      luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+                      libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
+                      luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
                   fail_on_unmatched_files: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
