@@ -12,20 +12,20 @@ jobs:
             matrix:
                 include:
                     # Linux builds
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       platform: linux
                       arch: x86-64
                       libc: gnu
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       platform: linux
                       arch: aarch64
                       libc: gnu
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       platform: linux
                       arch: aarch64
                       libc: musl
                     # Windows builds (cross-compiled from Linux)
-                    - os: ubuntu-latest
+                    - os: ubuntu-22.04
                       platform: windows
                       arch: x86-64
                       libc: gnu
