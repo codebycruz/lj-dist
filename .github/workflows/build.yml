@@ -97,7 +97,7 @@ jobs:
               if: matrix.platform == 'macos' && matrix.arch == 'arm64'
               working-directory: luajit
               run: |
-                  make STATIC_CC="clang" BUILDMODE=static TARGET_SYS=Darwin
+                  MACOSX_DEPLOYMENT_TARGET=11.0 make STATIC_CC="clang" BUILDMODE=static TARGET_SYS=Darwin
 
             - name: Build LuaJIT (Linux ARM64 GNU)
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'gnu'
