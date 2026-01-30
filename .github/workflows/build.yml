@@ -29,6 +29,10 @@ jobs:
                       platform: windows
                       arch: x86-64
                       libc: gnu
+                    # macOS builds
+                    - os: macos-14
+                      platform: macos
+                      arch: arm64
 
         runs-on: ${{ matrix.os }}
 
@@ -89,6 +93,12 @@ jobs:
               run: |
                   make STATIC_CC="gcc" BUILDMODE=static
 
+            - name: Build LuaJIT (macOS ARM64)
+              if: matrix.platform == 'macos' && matrix.arch == 'arm64'
+              working-directory: luajit
+              run: |
+                  make STATIC_CC="clang" BUILDMODE=static TARGET_SYS=Darwin
+
             - name: Build LuaJIT (Linux ARM64 GNU)
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'gnu'
               working-directory: luajit
@@ -123,6 +133,14 @@ jobs:
                   cp luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
                   cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib/
 
+            - name: Package library (macOS)
+              if: matrix.platform == 'macos'
+              run: |
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
+                  mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
+                  cp -r luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
+                  cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
+
             - name: Package binary (Linux)
               if: matrix.platform == 'linux'
               run: |
@@ -135,21 +153,52 @@ jobs:
                   mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}
                   cp luajit/src/luajit.exe luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
-            - name: Create library tarball
+            - name: Package binary (macOS)
+              if: matrix.platform == 'macos'
+              run: |
+                  mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}
+                  cp luajit/src/luajit luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+
+            - name: Create library tarball (with libc)
+              if: matrix.libc != ''
               run: |
                   tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
-            - name: Create binary tarball
+            - name: Create library tarball (without libc)
+              if: matrix.libc == ''
+              run: |
+                  tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}/
+
+            - name: Create binary tarball (with libc)
+              if: matrix.libc != ''
               run: |
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
-            - name: Upload to release
+            - name: Create binary tarball (without libc)
+              if: matrix.libc == ''
+              run: |
+                  tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}/
+
+            - name: Upload to release (with libc)
+              if: matrix.libc != ''
               uses: softprops/action-gh-release@v2
               with:
                   tag_name: latest
                   files: |
                       libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
                       luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
+                  fail_on_unmatched_files: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload to release (without libc)
+              if: matrix.libc == ''
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: latest
+                  files: |
+                      libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
+                      luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz
                   fail_on_unmatched_files: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
