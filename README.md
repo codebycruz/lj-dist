@@ -9,7 +9,6 @@ Here's a table of supported platforms and download links to the `luajit` binary.
 | Platform    | Architecture            | libc          | Download                                                                                                       |
 | ----------- | ----------------------- | ------------- | -------------------------------------------------------------------------------------------------------------- |
 | **Linux**   | x86-64                  | glibc (2.35+) | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-x86-64-gnu.tar.gz)   |
-| **Linux**   | x86-64                  | musl          | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-x86-64-musl.tar.gz)  |
 | **Linux**   | aarch64 (ARM64)         | glibc (2.35+) | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-aarch64-gnu.tar.gz)  |
 | **Linux**   | aarch64 (ARM64)         | musl          | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-aarch64-musl.tar.gz) |
 | **Windows** | x86-64                  | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-windows-x86-64-gnu.tar.gz) |
