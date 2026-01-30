@@ -107,7 +107,6 @@ jobs:
               run: |
                   make HOST_CC="gcc -m64" CROSS=x86_64-w64-mingw32- STATIC_CC="x86_64-w64-mingw32-gcc" BUILDMODE=static TARGET_SYS=Windows
 
-            # Package library (static lib + headers)
             - name: Package library (Linux)
               if: matrix.platform == 'linux'
               run: |
@@ -124,7 +123,6 @@ jobs:
                   cp luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
                   cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib/
 
-            # Package binary (executable only)
             - name: Package binary (Linux)
               if: matrix.platform == 'linux'
               run: |
@@ -137,7 +135,6 @@ jobs:
                   mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}
                   cp luajit/src/luajit.exe luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
-            # Create tarballs
             - name: Create library tarball
               run: |
                   tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
@@ -146,7 +143,6 @@ jobs:
               run: |
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
-            # Upload to release
             - name: Upload to release
               uses: softprops/action-gh-release@v2
               with:
