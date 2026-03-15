@@ -30,9 +30,12 @@ jobs:
                       arch: x86-64
                       libc: gnu
                     # macOS builds
-                    - os: macos-14
+                    - os: macos-15
                       platform: macos
-                      arch: arm64
+                      arch: aarch64
+                    - os: macos-15-intel
+                      platform: macos
+                      arch: x86-64
 
         runs-on: ${{ matrix.os }}
 
@@ -93,8 +96,8 @@ jobs:
               run: |
                   make STATIC_CC="gcc" BUILDMODE=static
 
-            - name: Build LuaJIT (macOS ARM64)
-              if: matrix.platform == 'macos' && matrix.arch == 'arm64'
+            - name: Build LuaJIT (macOS)
+              if: matrix.platform == 'macos'
               working-directory: luajit
               run: |
                   MACOSX_DEPLOYMENT_TARGET=11.0 make STATIC_CC="clang" BUILDMODE=static TARGET_SYS=Darwin
