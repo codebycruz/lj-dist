@@ -29,6 +29,10 @@ jobs:
                       platform: windows
                       arch: x86-64
                       libc: gnu
+                    - os: ubuntu-22.04
+                      platform: windows
+                      arch: aarch64
+                      libc: gnu
                     # macOS builds
                     - os: macos-15
                       platform: macos
@@ -78,11 +82,17 @@ jobs:
               run: |
                   docker pull --platform linux/arm64 alpine:3.23
 
-            - name: Install cross-compilation tools (Windows)
-              if: matrix.platform == 'windows'
+            - name: Install cross-compilation tools (Windows x86-64)
+              if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
               run: |
                   sudo apt-get update
                   sudo apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+
+            - name: Install cross-compilation tools (Windows ARM64)
+              if: matrix.platform == 'windows' && matrix.arch == 'aarch64'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y gcc-mingw-w64-arm64 g++-mingw-w64-arm64
 
             - name: Checkout LuaJIT
               uses: actions/checkout@v6
@@ -119,6 +129,12 @@ jobs:
               working-directory: luajit
               run: |
                   make HOST_CC="gcc -m64" CROSS=x86_64-w64-mingw32- STATIC_CC="x86_64-w64-mingw32-gcc" BUILDMODE=static TARGET_SYS=Windows
+
+            - name: Build LuaJIT (Windows ARM64)
+              if: matrix.platform == 'windows' && matrix.arch == 'aarch64'
+              working-directory: luajit
+              run: |
+                  make HOST_CC="gcc" CROSS=aarch64-w64-mingw32- STATIC_CC="aarch64-w64-mingw32-gcc" BUILDMODE=static TARGET_SYS=Windows
 
             - name: Package library (Linux)
               if: matrix.platform == 'linux'
