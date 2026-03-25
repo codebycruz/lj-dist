@@ -6,14 +6,15 @@ This repository serves to provide up to date builds of LuaJIT as a binary and st
 
 Here's a table of supported platforms and download links to the `luajit` binary.
 
-| Platform    | Architecture            | libc          | Download                                                                                                       |
-| ----------- | ----------------------- | ------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Linux**   | x86-64                  | glibc (2.35+) | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-x86-64-gnu.tar.gz)   |
-| **Linux**   | aarch64 (ARM64)         | glibc (2.35+) | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-aarch64-gnu.tar.gz)  |
-| **Linux**   | aarch64 (ARM64)         | musl          | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-aarch64-musl.tar.gz) |
-| **Windows** | x86-64                  | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-windows-x86-64-gnu.tar.gz) |
-| **macOS**   | x86-64 (Intel)          | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/download/latest/luajit-macos-x86-64.tar.gz)       |
-| **macOS**   | aarch64 (Apple Silicon) | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/download/latest/luajit-macos-aarch64.tar.gz)      |
+| Platform    | Architecture            | libc          | Download                                                                                                        |
+| ----------- | ----------------------- | ------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Linux**   | x86-64                  | glibc (2.35+) | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-x86-64-gnu.tar.gz)    |
+| **Linux**   | aarch64 (ARM64)         | glibc (2.35+) | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-aarch64-gnu.tar.gz)   |
+| **Linux**   | aarch64 (ARM64)         | musl          | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-linux-aarch64-musl.tar.gz)  |
+| **Windows** | x86-64                  | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-windows-x86-64-gnu.tar.gz)  |
+| **Windows** | aarch64 (ARM64)         | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/latest/download/luajit-windows-aarch64-gnu.tar.gz) |
+| **macOS**   | x86-64 (Intel)          | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/download/latest/luajit-macos-x86-64.tar.gz)        |
+| **macOS**   | aarch64 (Apple Silicon) | -             | [✅ Download](https://github.com/codebycruz/lj-dist/releases/download/latest/luajit-macos-aarch64.tar.gz)       |
 
 If you need to get the library instead, check out the [release](https://github.com/codebycruz/lj-dist/releases/latest) page manually and download the corresponding `libluajit`, although you would usually do this programmatically.
 
