@@ -151,7 +151,7 @@ jobs:
               run: |
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib
-                  cp -r luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
+                  cp -r luajit/src/*.h luajit/src/*.hpp libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
                   cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib/
 
             - name: Package library (Windows)
@@ -159,7 +159,7 @@ jobs:
               run: |
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib
-                  cp luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
+                  cp luajit/src/*.h luajit/src/*.hpp libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/include/
                   cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/lib/
 
             - name: Package library (macOS)
@@ -167,7 +167,7 @@ jobs:
               run: |
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include
                   mkdir -p libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib
-                  cp -r luajit/src/*.h libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
+                  cp -r luajit/src/*.h luajit/src/*.hpp libluajit-${{ matrix.platform }}-${{ matrix.arch }}/include/
                   cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
 
             - name: Package binary (Linux)
