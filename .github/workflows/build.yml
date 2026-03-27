@@ -114,25 +114,25 @@ jobs:
               if: matrix.platform == 'linux' && matrix.arch == 'x86-64'
               working-directory: luajit
               run: |
-                  make STATIC_CC="gcc" BUILDMODE=static
+                  make STATIC_CC="gcc" BUILDMODE=static CFLAGS="-fPIC"
 
             - name: Build LuaJIT (macOS)
               if: matrix.platform == 'macos'
               working-directory: luajit
               run: |
-                  MACOSX_DEPLOYMENT_TARGET=11.0 make STATIC_CC="clang" BUILDMODE=static TARGET_SYS=Darwin
+                  MACOSX_DEPLOYMENT_TARGET=11.0 make STATIC_CC="clang" BUILDMODE=static TARGET_SYS=Darwin CFLAGS="-fPIC"
 
             - name: Build LuaJIT (Linux ARM64 GNU)
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'gnu'
               working-directory: luajit
               run: |
-                  make HOST_CC="gcc -m64" CROSS=aarch64-linux-gnu- STATIC_CC="aarch64-linux-gnu-gcc" BUILDMODE=static TARGET_SYS=Linux
+                  make HOST_CC="gcc -m64" CROSS=aarch64-linux-gnu- STATIC_CC="aarch64-linux-gnu-gcc" BUILDMODE=static TARGET_SYS=Linux CFLAGS="-fPIC"
 
             - name: Build LuaJIT (Linux ARM64 musl)
               if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'musl'
               run: |
                   docker run --rm --platform linux/arm64 -v $PWD/luajit:/work -w /work alpine:3.23 \
-                    sh -c 'apk add --no-cache make gcc musl-dev && make STATIC_CC="gcc" BUILDMODE=static'
+                    sh -c 'apk add --no-cache make gcc musl-dev && make STATIC_CC="gcc" BUILDMODE=static CFLAGS="-fPIC"'
 
             - name: Build LuaJIT (Windows x86-64)
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
