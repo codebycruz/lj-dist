@@ -24,6 +24,10 @@ jobs:
                       platform: linux
                       arch: aarch64
                       libc: musl
+                    - os: ubuntu-22.04
+                      platform: linux
+                      arch: aarch64
+                      libc: android
                     # Windows builds (cross-compiled from Linux)
                     - os: ubuntu-22.04
                       platform: windows
@@ -134,6 +138,21 @@ jobs:
                   docker run --rm --platform linux/arm64 -v $PWD/luajit:/work -w /work alpine:3.23 \
                     sh -c 'apk add --no-cache make gcc musl-dev && make STATIC_CC="gcc" BUILDMODE=static CFLAGS="-fPIC"'
 
+            - name: Build LuaJIT (Linux ARM64 Android)
+              if: matrix.platform == 'linux' && matrix.arch == 'aarch64' && matrix.libc == 'android'
+              working-directory: luajit
+              run: |
+                  NDK_TOOLCHAIN=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin
+                  make HOST_CC="gcc -m64" \
+                    STATIC_CC="$NDK_TOOLCHAIN/aarch64-linux-android21-clang" \
+                    DYNAMIC_CC="$NDK_TOOLCHAIN/aarch64-linux-android21-clang -fPIC" \
+                    TARGET_LD="$NDK_TOOLCHAIN/aarch64-linux-android21-clang" \
+                    TARGET_AR="$NDK_TOOLCHAIN/llvm-ar rcus" \
+                    TARGET_STRIP="$NDK_TOOLCHAIN/llvm-strip" \
+                    BUILDMODE=static \
+                    TARGET_SYS=Linux \
+                    CFLAGS="-fPIC"
+
             - name: Build LuaJIT (Windows x86-64)
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
               working-directory: luajit
@@ -171,7 +190,7 @@ jobs:
                   cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
 
             - name: Package binary (Linux)
-              if: matrix.platform == 'linux'
+              if: matrix.platform == 'linux' && matrix.libc != 'android'
               run: |
                   mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}
                   cp luajit/src/luajit luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
@@ -199,7 +218,7 @@ jobs:
                   tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
             - name: Create binary tarball (with libc)
-              if: matrix.libc != ''
+              if: matrix.libc != '' && matrix.libc != 'android'
               run: |
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
@@ -209,13 +228,24 @@ jobs:
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
             - name: Upload to release (with libc)
-              if: matrix.libc != ''
+              if: matrix.libc != '' && matrix.libc != 'android'
               uses: softprops/action-gh-release@v2
               with:
                   tag_name: latest
                   files: |
                       libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
                       luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
+                  fail_on_unmatched_files: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload to release (Android, library only)
+              if: matrix.libc == 'android'
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: latest
+                  files: |
+                      libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
                   fail_on_unmatched_files: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
