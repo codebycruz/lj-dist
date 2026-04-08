@@ -190,7 +190,7 @@ jobs:
                   cp luajit/src/libluajit.a libluajit-${{ matrix.platform }}-${{ matrix.arch }}/lib/
 
             - name: Package binary (Linux)
-              if: matrix.platform == 'linux' && matrix.libc != 'android'
+              if: matrix.platform == 'linux'
               run: |
                   mkdir -p luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}
                   cp luajit/src/luajit luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
@@ -218,7 +218,7 @@ jobs:
                   tar -czf libluajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz libluajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
             - name: Create binary tarball (with libc)
-              if: matrix.libc != '' && matrix.libc != 'android'
+              if: matrix.libc != ''
               run: |
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}/
 
@@ -228,24 +228,13 @@ jobs:
                   tar -czf luajit-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz luajit-${{ matrix.platform }}-${{ matrix.arch }}/
 
             - name: Upload to release (with libc)
-              if: matrix.libc != '' && matrix.libc != 'android'
+              if: matrix.libc != ''
               uses: softprops/action-gh-release@v2
               with:
                   tag_name: latest
                   files: |
                       libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
                       luajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
-                  fail_on_unmatched_files: true
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Upload to release (Android, library only)
-              if: matrix.libc == 'android'
-              uses: softprops/action-gh-release@v2
-              with:
-                  tag_name: latest
-                  files: |
-                      libluajit-${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.libc }}.tar.gz
                   fail_on_unmatched_files: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
