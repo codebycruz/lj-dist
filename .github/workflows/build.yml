@@ -62,15 +62,8 @@ jobs:
                   path: /var/lib/docker
                   key: ${{ runner.os }}-docker-muslcc-aarch64
 
-            - name: Cache MinGW toolchain
-              if: matrix.platform == 'windows'
-              uses: actions/cache@v5
-              with:
-                  path: /var/cache/apt/archives
-                  key: ${{ runner.os }}-apt-mingw-toolchain
-
             - name: Cache llvm-mingw toolchain
-              if: matrix.platform == 'windows' && matrix.arch == 'aarch64'
+              if: matrix.platform == 'windows'
               uses: actions/cache@v5
               with:
                   path: llvm-mingw-20260311-ucrt-ubuntu-22.04-x86_64
@@ -93,14 +86,8 @@ jobs:
               run: |
                   docker pull --platform linux/arm64 alpine:3.23
 
-            - name: Install cross-compilation tools (Windows x86-64)
-              if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install -y gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
-
-            - name: Install cross-compilation tools (Windows ARM64)
-              if: matrix.platform == 'windows' && matrix.arch == 'aarch64'
+            - name: Install cross-compilation tools (Windows)
+              if: matrix.platform == 'windows'
               run: |
                   if [ ! -d "llvm-mingw-20260311-ucrt-ubuntu-22.04-x86_64" ]; then
                     wget -q https://github.com/mstorsjo/llvm-mingw/releases/download/20260311/llvm-mingw-20260311-ucrt-ubuntu-22.04-x86_64.tar.xz
@@ -157,7 +144,7 @@ jobs:
               if: matrix.platform == 'windows' && matrix.arch == 'x86-64'
               working-directory: luajit
               run: |
-                  make HOST_CC="gcc -m64" CROSS=x86_64-w64-mingw32- STATIC_CC="x86_64-w64-mingw32-gcc" BUILDMODE=static TARGET_SYS=Windows
+                  make HOST_CC="gcc -m64" CROSS=x86_64-w64-mingw32- STATIC_CC="x86_64-w64-mingw32-clang" BUILDMODE=static TARGET_SYS=Windows
 
             - name: Build LuaJIT (Windows ARM64)
               if: matrix.platform == 'windows' && matrix.arch == 'aarch64'
